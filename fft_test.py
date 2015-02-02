@@ -1,21 +1,28 @@
 __author__ = 'Const'
 
-from bioalgo.fft_align import take_data, fft_align
+from bioalgo.fft_align import take_data, fft_align, sequencer_test
 from bioalgo.smith_waterman import mtx_construct, construct_way_mtx, way_back
 import numpy as np
 import cProfile
 
 fseq, sseq, alphabet, score_matrix = take_data(
-    seq_input_first_filepath='big_seq_input_first',
-    seq_input_second_filepath='big_seq_input_second',
+    seq_input_first_filepath='seq_input_first',
+    seq_input_second_filepath='seq_input_second',
     matrix_filepath='score_matrix.txt')
 
 
 
+sequencer_test((fseq, sseq, alphabet, score_matrix), amount=5)
+
+
+
+
+
+"""
 #mtx = mtx_construct(fseq, sseq, score_matrix)
 
 #aligned, shift = way_back(fseq, sseq, mtx, score_matrix)
-cProfile.run(fft_align((fseq, sseq, alphabet, score_matrix), amount=5))
+cProfile.run("fft_align((fseq, sseq, alphabet, score_matrix), amount=5)", sort=True)
 aligned, shift = fft_align((fseq, sseq, alphabet, score_matrix), amount=5)
 
 print aligned, shift
@@ -42,7 +49,7 @@ fb_view[aligned[1, :] != 0] = fseq[shift + 1: shift + fslen]
 fresult = ''.join(alphabet[charcode] for charcode in fbuf)
 sresult = ''.join(alphabet[charcode] for charcode in sbuf)
 print fresult
-print sresult
+print sresult"""
 
 """N = fseq.size
 fresult = ''.join(alphabet[charcode] for charcode in fseq)
