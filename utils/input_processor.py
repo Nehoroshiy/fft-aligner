@@ -70,7 +70,7 @@ def read_nucleotide_raw_sequences(charmap, path_to_nucleotide_sequences):
 
 
 def read_nucleotide_alphabet_and_matrix(path_to_scoring_matrix):
-    with open('score_matrix.txt') as f:
+    with open(path_to_scoring_matrix) as f:
         alphabet = f.readline()[:-1].split(' ')
         alphabet.append('-')
     score_matrix = np.loadtxt('score_matrix.txt', skiprows=1, dtype=int)

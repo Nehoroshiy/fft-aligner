@@ -2,7 +2,7 @@ __author__ = 'Const'
 
 import numpy as np
 np.set_printoptions(suppress=True, linewidth=200)
-from numpy.fft import fft, ifft
+from numpy.fft import fft, ifft, rfft, irfft
 from utils.input_processor import read_nucleotide_alphabet_and_matrix
 from smith_waterman import mtx_construct, way_back
 
@@ -18,72 +18,10 @@ def take_data(seq_input_first_filepath, seq_input_second_filepath, matrix_filepa
     K = len(alphabet) - 1
 
     for i in xrange(K):
-        print ord(alphabet[i])
         fseq[fseq == ord(alphabet[i])] = i
     for i in xrange(K):
         sseq[sseq == ord(alphabet[i])] = i
-    print 'fseq:', fseq
-    print 'sseq:', sseq
     return fseq, sseq, alphabet, score_matrix
-
-
-
-def sequencer_test((fseq, sseq, alphabet, score_matrix), amount=1):
-    N = fseq.size
-    M = len(sseq)
-    K = len(alphabet) - 1
-
-    M2 = power_2_bound(M)
-    N2 = power_2_bound(N)
-    COR_SIZE = M2 * 2
-    correlation = np.zeros(N2, dtype=np.float)
-    fdata = np.zeros(N2, dtype=np.float)
-    fdata[fseq == 0] = 1
-    sdata = np.zeros(N2, dtype=np.float)
-    sdata[sseq == 1] = 1
-    if M2 == M:
-        M2 *= 2
-    if N % M2:
-        block_count = N / M2
-    else:
-        block_count = N / M2 + 1
-
-    fblock = np.zeros(COR_SIZE)
-    sblock = np.zeros(COR_SIZE)
-    sblock[sseq == 1] = 1
-    block_correlation = np.zeros(COR_SIZE)
-    for block_index in xrange(block_count):
-        fseq_view = fseq[M2 * block_index: M2 * (block_index + 1)]
-        fblock[fseq_view == 0] = 1
-        block_correlation = ifft(np.conj(fft(fblock)) * fft(sblock[::-1])).real
-        delta = np.argmax(block_correlation)
-        print block_correlation
-        print delta
-        fbuf = fblock[:]
-        fresult = ''.join(alphabet[int(charcode)] for charcode in fbuf)
-        sresult = ''.join(alphabet[int(charcode)] for charcode in sblock[:M])
-        print ''.join(alphabet[int(charcode)] for charcode in fseq[delta:])
-        print ''.join(alphabet[int(charcode)] for charcode in sseq)
-        print fresult
-        print sresult
-        print '-'*80
-        print '-'*80
-    print '-'*80
-    correlation = ifft(np.conj(fft(fdata)) * fft(sdata[::-1])).real
-    delta = np.argmax(correlation)
-    print correlation
-    print delta
-    fbuf = fdata[:]
-    print ''.join(alphabet[int(charcode)] for charcode in fseq[delta:])
-    print ''.join(alphabet[int(charcode)] for charcode in sseq)
-    fresult = ''.join(alphabet[int(charcode)] for charcode in fbuf)
-    sresult = ''.join(alphabet[int(charcode)] for charcode in sdata[:M])
-    print fresult
-    print sresult
-    print '-'*80
-    print '-'*80
-
-
 
 
 def fft_align((fseq, sseq, alphabet, score_matrix), amount=1):
@@ -92,36 +30,43 @@ def fft_align((fseq, sseq, alphabet, score_matrix), amount=1):
     K = len(alphabet) - 1
 
     N2 = power_2_bound(N)
-    fdata = np.zeros(N2, np.complex64)
-    correlation = np.zeros(N2, np.complex64)
-    sdata = np.zeros(N2, np.complex64)
+    fdata = np.zeros(N2, np.float)
+    correlation = np.zeros(N2, np.float)
+    sdata = np.zeros(N2, np.float)
     for i in xrange(K):
         scoring_row = score_matrix[i]
         for j in xrange(K):
             fdata[fseq == j] = scoring_row[j]
         sdata_view = sdata[:M]
         sdata_view[sseq == i] = 1
-        correlation += ifft(np.conj(fft(fdata)) * fft(sdata)).real
+        correlation += ifft_fast(np.conj(fft(fdata)) * fft_fast(sdata)).real
 
     delta_args = np.argsort(correlation)[::-1][:amount]
-    print delta_args
+    print 'initial best shifts:'
+    print N2 - delta_args
     for delta_arg in delta_args:
         if delta_arg != 0:
-            delta_args[(delta_args != delta_arg) & (np.abs(delta_args - delta_arg) < M/2)] = 0
-    print delta_args
+            delta_args[(delta_args != delta_arg) & (np.abs(delta_args - delta_arg) < M)] = 0
+
 
     delta_args = delta_args[delta_args != 0]
+    delta_args = N2 - delta_args
+    print 'filtered best shifts:'
+    print delta_args
     max_score = -100000000
 
     for delta_arg in delta_args:
-        left_bound = min(N2 - delta_arg - M, 0)
-        right_bound = max(N2 - delta_arg + M, N)
+        left_bound = max(delta_arg - M, 0)
+        right_bound = min(delta_arg + M, N)
 
         search_region = fseq[left_bound: right_bound]
         way_mtx = mtx_construct(search_region, sseq, score_matrix, -1)
-        if way_mtx[-1].max() > max_score:
+        way_max = way_mtx[-1].max()
+        if way_max > max_score:
             alignment, shift = way_back(search_region, sseq, way_mtx, score_matrix, -1)
-    return alignment, shift
+            max_score = way_max
+            max_shift = left_bound + shift
+    return alignment, max_shift
 
 
 # returns smallest power of 2 that is greater or equal than v
