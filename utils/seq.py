@@ -1,12 +1,13 @@
 from random import randint
 import numpy as np
 
+
 def random_DNA_sequence(length):
     nucleotides = ['A', 'T', 'G', 'C']
     return ''.join([nucleotides[randint(0, 3)] for _ in range(length)])
 
 
-def print_aligned_seqnences(fseq, sseq, alphabet, aligned, shift):
+def print_aligned_seqences(fseq, sseq, alphabet, aligned, shift):
     N = fseq.size
     M = sseq.size
     NMOD = N + aligned.shape[1] - aligned[1].sum()
@@ -25,7 +26,16 @@ def print_aligned_seqnences(fseq, sseq, alphabet, aligned, shift):
     fb_view[:] = -1
     sb_view[aligned[0] != 0] = sseq[1:]
     fb_view[aligned[1, :] != 0] = fseq[shift + 1: shift + fslen]
+    fbuf[shift + MMOD:] = fseq[shift + fslen:]
     fresult = ''.join(alphabet[charcode] for charcode in fbuf)
     sresult = ''.join(alphabet[charcode] for charcode in sbuf)
     print fresult
     print sresult
+
+
+def read_nucleotide_alphabet_and_matrix(path_to_scoring_matrix):
+    with open(path_to_scoring_matrix) as f:
+        alphabet = f.readline()[:-1].split(' ')
+        alphabet.append('-')
+    score_matrix = np.loadtxt(path_to_scoring_matrix, skiprows=1, dtype=int)
+    return alphabet, score_matrix
