@@ -17,11 +17,11 @@ fseq, sseq, alphabet, score_matrix = take_data(
     matrix_filepath='score_matrix_dna.txt')"""
 
 
-aligned, shift = fft_align((fseq, sseq, alphabet, score_matrix), amount=5)
-print 'local alignment + shift step'
+aligned, shift = fft_align((fseq, sseq, alphabet, score_matrix), amount=8, test_flag=True)
+print 'Best local alignment + shift step'
 print aligned, shift
 print '*'*80
 
-print 'aligned_sequences:'
+print 'best aligned_sequences:'
 print_aligned_seqences(fseq, sseq, alphabet, aligned, shift)
 

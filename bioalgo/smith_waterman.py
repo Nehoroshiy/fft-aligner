@@ -38,6 +38,6 @@ def way_back(fseq, sseq, way_mtx, score_matrix, gap_penalty=-1):
         counter -= 1
     if i > 0:
         raise Exception('second string must be shorter!')
-    if j > 0:
+    if j >= 0:
         aligned = aligned[:, counter + 1:]
     return aligned, j
