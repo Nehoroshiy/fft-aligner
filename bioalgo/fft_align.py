@@ -27,7 +27,8 @@ def fft_align((fseq, sseq, alphabet, score_matrix), amount=1):
     K = len(alphabet) - 1
 
     # Firstly we count correlation of sequences
-    N2 = power_2_bound(N)
+    NS = N + M - 1
+    N2 = power_2_bound(NS)
     fdata = np.zeros(N2, np.float)
     correlation = np.zeros(N2, np.float)
     sdata = np.zeros(N2, np.float)
@@ -35,12 +36,12 @@ def fft_align((fseq, sseq, alphabet, score_matrix), amount=1):
         scoring_row = score_matrix[i]
         for j in xrange(K):
             fdata[fseq == j] = scoring_row[j]
-        sdata_view = sdata[:M]
+        sdata_view = sdata[N - M:N]
         sdata_view[sseq == i] = 1
         correlation += ifft_fast(np.conj(fft_fast(fdata)) * fft_fast(sdata)).real
 
     # Then we find best amount correlation values
-    delta_args = np.argsort(correlation)[::-1][:amount]
+    delta_args = np.argsort(correlation[::-1])[::-1][:amount]
     print 'initial best shifts:'
     print N2 - delta_args
 
